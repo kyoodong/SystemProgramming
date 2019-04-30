@@ -16,6 +16,7 @@
 #include <string.h>
 #include <memory.h>
 #include <fcntl.h>
+#include <stdarg.h>
 
 #include "my_assembler_20162489.h"
 
@@ -548,7 +549,7 @@ static int assem_pass1(void)
 		}
 		else if (!strcmp(t->operator, "CSECT")) {
 			strcpy(currentCsect, t->label);
-			objectProgramLength += locctr;
+			//objectProgramLength += locctr;
 			locctr = 0;
 
 			if (!insert_symbol(t->label, currentCsect, locctr))
@@ -590,27 +591,20 @@ int read_operator(const char* str, char* str_for_save) {
 */
 void make_symtab_output(char *file_name)
 {
+    FILE* file = fopen(file_name, "w");
+    
 	// 표준 입출력
 	if (file_name == NULL) {
 		char curCsect[10];
 		for (int i = 0; i < symbolIndex; i++) {
 			if (strcmp(curCsect, sym_table[i].csect)) {
-				printf("\n");
+				printF(file, "\n");
 				strcpy(curCsect, sym_table[i].csect);
 			}
-			printf("%s %X\n", sym_table[i].symbol, sym_table[i].addr);
+			printF(file, "%s %X\n", sym_table[i].symbol, sym_table[i].addr);
 		}
-		return;
 	}
-
-	// 파일 입출력
-	FILE* file = fopen(file_name, "w");
-	if (file == NULL) {
-		printf("%s 파일 생성 에러\n", file_name);
-		return;
-	}
-
-	fclose(file);
+    printF(file, "\n");
 }
 
 /*
@@ -639,6 +633,117 @@ void literal2ObjectCode(const char* literal, char* str_for_save) {
             strcat(str_for_save, str);
         }
     }
+}
+
+/*
+ * 설명: token의 nixbpe를 설정해주는 함수이다.
+ * 매개: t = 토큰
+ */
+void setNIXBPE(token* t) {
+    // RSUB 같이 operand가 없는 경우 PC Relative가 아님
+    if (t->operandCount == 0) {
+        t->nixbpe = DIRECT;
+        return;
+    }
+    
+    t->nixbpe |= P;
+    
+    // 4형식
+    if (t->operator[0] == '+') {
+        t->nixbpe |= E;
+        t->nixbpe &= 0b11111001;
+    }
+    
+    // Immediate
+    if (t->operand[0][0] == '#') {
+        t->nixbpe |= I;
+        t->nixbpe &= 0b11111001;
+    }
+    
+    // Indirect
+    else if (t->operand[0][0] == '@') {
+        t->nixbpe |= N;
+        int length = strlen(t->operand[0] + 1);
+        memmove(t->operand[0], t->operand[0] + 1, length);
+        t->operand[0][length] = '\0';
+    }
+    
+    else {
+        t->nixbpe |= DIRECT;
+    }
+}
+
+/*
+ * 설명: 3형식 명령어에서의 Operand를 구해주는 함수이다.
+ * 매개: t = Operand를 계산할 토큰
+ *      pc = PC Relative일 경우 pc값의 상대 주소로 계산된다.
+ *      csect = 현재 컨트롤 섹션
+ * 반환: ( n ) : 계산된 operand
+ *      ( ERROR ) : 계산 실패
+ */
+int calculateOperandInFormat3(token* t, int pc, const char* csect) {
+    int operand = 0;
+    int symbolIndex = search_symbol(t->operand[0], csect);
+    
+    // Direct
+    if ((t->nixbpe & DIRECT) == DIRECT) {
+        if (symbolIndex == -1) {
+            int literalIndex = search_literal(t->operand[0]);
+            if (literalIndex == -1)
+                return -2;
+            
+            literal lit = literal_table[literalIndex];
+            operand = lit.addr - pc;
+        }
+        else {
+            symbol s = sym_table[symbolIndex];
+            operand = s.addr - pc;
+        }
+        
+        // Base Relative
+        if (operand < -2048 || operand > 2047) {
+            int baseRelative = 0;
+        }
+        
+        // PC Relative
+        else {
+            operand &= 0x00000FFF;
+        }
+    }
+    // Immediate
+    else if ((t->nixbpe & I) == I) {
+        operand = atoi(t->operand[0] + 1);
+    } else if (symbolIndex == -1) {
+        return ERROR;
+    }
+    
+    return operand;
+}
+
+/*
+ * 설명: 2형식에서의 Operand를 계산하는 함수이다.
+ * 매개: t = Operand를 구할 토큰
+ * 반환: ( n ) = 성공적으로 계산된 Operand
+ *      ( -1 ) = 계산에 실패한 경우
+ */
+int calculateOperandInFormat2(token* t) {
+    int operand = 0;
+    for (int k = 0; k < t->operandCount; k++) {
+        int registerIndex = -1;
+        for (int l = 0; l < registerCount; l++) {
+            if (t->operand[k][0] == registers[l]) {
+                registerIndex = l;
+                break;
+            }
+        }
+        
+        if (registerIndex == -1)
+            return -1;
+        
+        operand += registerIndex;
+        operand <<= 4;
+    }
+    return operand;
 }
 
 /* ----------------------------------------------------------------------------------
@@ -684,12 +789,6 @@ static int assem_pass2(void)
             // 컨트롤 섹션 업데이트
 			strcpy(csect, t->label);
 		}
-		else if (!strcmp(t->operator, "RESW")) {
-
-		}
-		else if (!strcmp(t->operator, "RESB")) {
-
-		}
 		else if (!strcmp(t->operator, "END")) {
             // 할당되지 않은 리터럴들 모두 할당
             while (literalCount) {
@@ -705,128 +804,80 @@ static int assem_pass2(void)
 			}
 		}
 		else if (!strcmp(t->operator, "BYTE")) {
-			if (t->operand[0][0] == 'X') {
-                int k;
-				for (k = 2; t->operand[0][k] != '\''; k++) {
-                    t->objectCode[k - 2] = t->operand[0][k];
-				}
-                t->objectCode[k - 2] = '\0';
-			}
+            int k;
+            for (k = 2; t->operand[0][k] != '\''; k++) {
+                t->objectCode[k - 2] = t->operand[0][k];
+            }
+            t->objectCode[k - 2] = '\0';
 		}
 		else if (!strcmp(t->operator, "WORD")) {
             char str[10];
             sprintf(str, "%06X", atoi(t->operand[0]));
             strcat(t->objectCode, str);
 		}
-		else if (!strcmp(t->operator, "EQU")) {
+		else if (!strcmp(t->operator, "EQU") || !strcmp(t->operator, "RESB") || !strcmp(t->operator, "RESW")) {
+            // 기타 Directives
+            continue;
 		}
+        // 명령어
 		else {
+            // 명령어 set에 없는 경우 에러 발생
 			int opIndex;
 			if ((opIndex = search_opcode(t->operator)) < 0)
 				return -1;
 
+            // Looping
+            if (t->operandCount > 0 && !strcmp(t->operand[t->operandCount - 1], "X"))
+                t->nixbpe |= X;
+            
 			inst instruction = *inst_table[opIndex];
 			int format = instruction.format;
 			if (instruction.format == 3) {
-                if (t->operandCount > 0)
-                    t->nixbpe |= P;
-
-				if (t->operator[0] == '+') {
-					format = 4;
-					t->nixbpe |= E;
-					t->nixbpe &= 0b11111001;
-				}
-				else {
-					format = 3;
-				}
-
+                setNIXBPE(t);
+                
+                // 리터럴 처리
 				if (t->operand[0][0] == '=') {
                     int isExist = 0;
+                    // 이미 할당된 리터럴인지 체크
                     for (int k = 0; k < literalCount; k++) {
                         if (!strcmp(literals[k], t->operand[0])) {
                             isExist = 1;
                             break;
                         }
                     }
+                    
+                    // 이미 할당된 리터럴이 아닐 때만 리터럴에 추가
                     if (!isExist) {
                         strcpy(literals[literalCount++], t->operand[0]);
                     }
 				}
-
-				if (t->operand[0][0] == '#') {
-					t->nixbpe |= I;
-					t->nixbpe &= 0b11111001;
-				}
-
-				else if (t->operand[0][0] == '@') {
-					t->nixbpe |= N;
-                    int length = strlen(t->operand[0] + 1);
-                    memmove(t->operand[0], t->operand[0] + 1, length);
-                    t->operand[0][length] = '\0';
-				}
-				
-				else {
-					t->nixbpe |= DIRECT;
-				}
-			}
-
-			if (!strcmp(t->operand[t->operandCount - 1], "X"))
-				t->nixbpe |= X;
-
-            int symbolIndex = search_symbol(t->operand[0], csect);
-            
-			if (format >= 3) {
+                
 				int op = instruction.opcode | (t->nixbpe >> 4);
 				int xbpe = t->nixbpe & 0b00001111;
 				int pc = token_table[tokenIndex + 1]->address;
 				int operand = 0;
 
+                // operand가 없는 명령어
 				if (t->operandCount == 0) {
                     char str[10];
                     sprintf(str, "%02X%01X000", op, xbpe);
                     strcat(t->objectCode, str);
-					
 					continue;
 				}
-				
-				if (format == 3) {
-
-					// Direct
-					if ((t->nixbpe & DIRECT) == DIRECT) {
-						if (symbolIndex == -1) {
-							int literalIndex = search_literal(t->operand[0]);
-							if (literalIndex == -1)
-								return -2;
-
-							literal lit = literal_table[literalIndex];
-							operand = lit.addr - pc;
-						}
-						else {
-							symbol s = sym_table[symbolIndex];
-							operand = s.addr - pc;
-						}
-
-						// Base Relative
-						if (operand < -2048 || operand > 2047) {
-							int baseRelative = 0;
-						}
-
-						// PC Relative
-						else {
-							operand &= 0x00000FFF;
-						}
-					}
-					// Immediate
-					else if ((t->nixbpe & I) == I) {
-						operand = atoi(t->operand[0] + 1);
-					} else if (symbolIndex == -1) {
-						return -3;
-					}
+                
+                int symbolIndex = search_symbol(t->operand[0], csect);
+                // 3형식
+				if ((t->nixbpe & E) != E) {
+                    operand = calculateOperandInFormat3(t, pc, csect);
+                    if (operand == ERROR)
+                        return -3;
                     
                     char str[10];
                     sprintf(str, "%02X%01X%03X", op, xbpe, operand);
                     strcat(t->objectCode, str);
 				}
+                
+                // 4형식
 				else {
 					if (symbolIndex == -1) {
 						for (int i = 0; i < extrefCount; i++) {
@@ -842,26 +893,9 @@ static int assem_pass2(void)
 				}
             } else if (format == 2) {
                 int op = instruction.opcode;
-                int operand = 0;
-                if (instruction.operandCount != t->operandCount) {
-                    return -5;
-                }
-                
-                for (int k = 0; k < instruction.operandCount; k++) {
-                    int registerIndex = -1;
-                    for (int l = 0; l < registerCount; l++) {
-                        if (t->operand[k][0] == registers[l]) {
-                            registerIndex = l;
-                            break;
-                        }
-                    }
-                    
-                    if (registerIndex == -1)
-                        return -4;
-                    
-                    operand += registerIndex;
-                    operand <<= 4;
-                }
+                int operand = calculateOperandInFormat2(t);
+                if (operand == -1)
+                    return -4;
                 
                 char str[10];
                 sprintf(str, "%02X%02X", op, operand);
@@ -870,6 +904,29 @@ static int assem_pass2(void)
 		}
 	}
     return 0;
+}
+
+void printF(const FILE* file, const char* format, ...) {
+    char buffer[512] = {0};
+    va_list list;
+    va_start(list, format);
+    vsprintf(buffer, format, list);
+    va_end(list);
+    
+    if (file == NULL)
+        printf("%s", buffer);
+    else
+        fprintf(file, "%s", buffer);
+}
+
+void strcatWithPrintf(char* dst, const char* format, ...) {
+    char buffer[512] = {0};
+    va_list list;
+    va_start(list, format);
+    vsprintf(buffer, format, list);
+    va_end(list);
+    
+    strcat(dst, buffer);
 }
 
 /* ----------------------------------------------------------------------------------
@@ -884,52 +941,163 @@ static int assem_pass2(void)
 */
 void make_objectcode_output(char *file_name)
 {
-    // 표준 입출력
-    if (file_name == NULL) {
-        char csect[10];
-        char extrefList[3][10];
-        int extrefListCount = 0;
-        token extrefTokens[10];
-        int extrefTokenCount = 0;
+    FILE* file = fopen(file_name, "w");
+    
+    // 현재 컨트롤섹션
+    char csect[10];
+    
+    // 외부 변수 리스트
+    char extrefList[3][10];
+    int extrefListCount = 0;
+    
+    // 외부 변수가 사용된 토큰 리스트
+    token extrefTokens[10];
+    int extrefTokenCount = 0;
+    
+    int objectProgramLength = 0;
+    
+    char buffer[100][80] = {0};
+    int bufferCount = 0;
+    
+    for (int i = 0; i < token_line; i++) {
+        token t = *token_table[i];
         
-        for (int i = 0; i < token_line; i++) {
-            token t = *token_table[i];
+        if (!strcmp(t.operator, "START")) {
+            strcatWithPrintf(buffer[bufferCount], "H%-6s%06X", t.label, atoi(t.operand[0]));
             
-            if (!strcmp(t.operator, "START")) {
-                printf("H");
-                printf("%-6s", t.label);
-                printf("000000");
-                
-                strcpy(csect, t.label);
-                // TODO: 오브젝트 프로그램 길이
-                printf("\n");
-            } else if (!strcmp(t.operator, "EXTDEF")) {
-                printf("D");
-                
-                for (int j = 0; j < t.operandCount; j++) {
-                    printf("%-6s", t.operand[j]);
-                    symbol s = sym_table[search_symbol(t.operand[j], csect)];
-                    printf("%06X", s.addr);
+            // 컨트롤섹션 초기화
+            strcpy(csect, t.label);
+            bufferCount++;
+        } else if (!strcmp(t.operator, "EXTDEF")) {
+            strcatWithPrintf(buffer[bufferCount], "D");
+            
+            for (int j = 0; j < t.operandCount; j++) {
+                strcatWithPrintf(buffer[bufferCount], "%-6s", t.operand[j]);
+                symbol s = sym_table[search_symbol(t.operand[j], csect)];
+                strcatWithPrintf(buffer[bufferCount], "%06X", s.addr);
+            }
+            strcatWithPrintf(buffer[bufferCount], "\n");
+            bufferCount++;
+        } else if (!strcmp(t.operator, "EXTREF")) {
+            strcatWithPrintf(buffer[bufferCount], "R");
+            
+            for (int j = 0; j < t.operandCount; j++) {
+                strcatWithPrintf(buffer[bufferCount], "%-6s", t.operand[j]);
+                strcpy(extrefList[j], t.operand[j]);
+                extrefListCount++;
+            }
+            
+            strcatWithPrintf(buffer[bufferCount], "\n");
+            bufferCount++;
+        } else if (!strcmp(t.operator, "RESB")) {
+            objectProgramLength += atoi(t.operand[0]);
+        } else if (!strcmp(t.operator, "RESW")) {
+            objectProgramLength += (atoi(t.operand[0]) * 3);
+        } else if (!strcmp(t.operator, "LTORG")) {
+            
+        } else if (!strcmp(t.operator, "EQU")){
+            // 외부 참조 변수 쓰는지 확인
+            int isFound = 0;
+            for (int j = 0; j < extrefListCount; j++) {
+                for (int k = 0; k < t.operandCount; k++) {
+                    if (!strcmp(extrefList[j], t.operand[k])) {
+                        isFound = 1;
+                        extrefTokens[extrefTokenCount++] = t;
+                        break;
+                    }
                 }
-                printf("\n");
-            } else if (!strcmp(t.operator, "EXTREF")) {
-                printf("R");
                 
-                for (int j = 0; j < t.operandCount; j++) {
-                    printf("%-6s", t.operand[j]);
-                    strcpy(extrefList[j], t.operand[j]);
-                    extrefListCount++;
+                if (isFound)
+                    break;
+            }
+            
+        } else if (!strcmp(t.operator, "CSECT")) {
+            for (int j = 0; j < extrefTokenCount; j++) {
+                // BUFEND - BUFFER 수식 분리
+                int error = split(extrefTokens[j].operand[0], extrefTokens[j].operand[1], '-');
+                if (error) {
+                    strcatWithPrintf(buffer[bufferCount], "M%06X05+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
+                    bufferCount++;
+                } else {
+                    //TODO: WORD 구분 해서 06 출력해줘야함
+                    // TODO: -만 처리하는거 고쳐야함
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
+                    bufferCount++;
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06-%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[1]);
+                    bufferCount++;
+                }
+            }
+            
+            extrefTokenCount = 0;
+            extrefListCount = 0;
+            
+            strcatWithPrintf(buffer[0], "%06X\n", objectProgramLength);
+            strcatWithPrintf(buffer[bufferCount], "E\n");
+            bufferCount++;
+            objectProgramLength = 0;
+            
+            for (int k = 0; k < bufferCount; k++) {
+                printF(file, "%s", buffer[k]);
+                buffer[k][0] = '\0';
+            }
+            
+            bufferCount = 0;
+            strcatWithPrintf(buffer[bufferCount], "H%-6s%06X", t.label, atoi(t.operand[0]));
+            
+            strcpy(csect, t.label);
+            bufferCount++;
+        } else if (!strcmp(t.operator, "END")) {
+            for (int j = 0; j < extrefTokenCount; j++) {
+                // BUFEND - BUFFER 수식 분리
+                int error = split(extrefTokens[j].operand[0], extrefTokens[j].operand[1], '-');
+                if (error) {
+                    strcatWithPrintf(buffer[bufferCount], "M%06X05+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
+                    bufferCount++;
+                } else {
+                    //TODO: WORD 구분 해서 06 출력해줘야함
+                    // TODO: -만 처리하는거 고쳐야함
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
+                    bufferCount++;
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06-%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[1]);
+                    bufferCount++;
+                }
+            }
+            
+            strcatWithPrintf(buffer[0], "%06X\n", objectProgramLength);
+            strcatWithPrintf(buffer[bufferCount], "E\n");
+            bufferCount++;
+            
+            for (int k = 0; k < bufferCount; k++) {
+                printF(file, "%s", buffer[k]);
+            }
+        } else {
+            int recordLength = 0;
+            int index = 1;
+            char record[80] = {0};
+            char str[10];
+            record[0] = 'T';
+            
+            // 시작주소
+            sprintf(str, "%06X", t.address);
+            strcat(record, str);
+            index += 6;
+            
+            // TODO: 레이블 바이트 수
+            record[7] = '0';
+            record[8] = '0';
+            index += 2;
+            
+            // 레코드 채우기
+            while (index + strlen(t.objectCode) < 70) {
+                if (search_opcode(t.operator) < 0 && strcmp(t.operator, "BYTE") && strcmp(t.operator, "WORD")) {
+                    break;
                 }
                 
-                printf("\n");
-            } else if (!strcmp(t.operator, "RESB") || !strcmp(t.operator, "RESW") || !strcmp(t.operator, "LTORG")) {
-                continue;
-            } else if (!strcmp(t.operator, "EQU")){
                 // 외부 참조 변수 쓰는지 확인
                 int isFound = 0;
                 for (int j = 0; j < extrefListCount; j++) {
                     for (int k = 0; k < t.operandCount; k++) {
-                        if (!strcmp(extrefList[j], t.operand[k])) {
+                        if (strstr(t.operand[k], extrefList[j]) != NULL) {
                             isFound = 1;
                             extrefTokens[extrefTokenCount++] = t;
                             break;
@@ -940,96 +1108,21 @@ void make_objectcode_output(char *file_name)
                         break;
                 }
                 
-            } else if (!strcmp(t.operator, "CSECT")) {
-                for (int j = 0; j < extrefTokenCount; j++) {
-                    // BUFEND - BUFFER 수식 분리
-                    int error = split(extrefTokens[j].operand[0], extrefTokens[j].operand[1], '-');
-                    if (error) {
-                        printf("M%06X05+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
-                    } else {
-                        //TODO: WORD 구분 해서 06 출력해줘야함
-                        // TODO: -만 처리하는거 고쳐야함
-                        printf("M%06X06+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
-                        printf("M%06X06-%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[1]);
-                    }
-                }
+                strcat(record + 9, t.objectCode);
+                recordLength += (strlen(t.objectCode) / 2);
                 
-                extrefTokenCount = 0;
-                extrefListCount = 0;
+                if (i == token_line - 1)
+                    break;
                 
-                printf("E\n");
-                printf("H");
-                printf("%-6s", t.label);
-                printf("000000");
-                
-                strcpy(csect, t.label);
-                // TODO: 오브젝트 프로그램 길이
-                printf("\n");
-            } else if (!strcmp(t.operator, "END")) {
-                for (int j = 0; j < extrefTokenCount; j++) {
-                    // BUFEND - BUFFER 수식 분리
-                    int error = split(extrefTokens[j].operand[0], extrefTokens[j].operand[1], '-');
-                    if (error) {
-                        printf("M%06X05+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
-                    } else {
-                        //TODO: WORD 구분 해서 06 출력해줘야함
-                        // TODO: -만 처리하는거 고쳐야함
-                        printf("M%06X06+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
-                        printf("M%06X06-%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[1]);
-                    }
-                }
-                
-                printf("E\n");
-            } else {
-                int index = 1;
-                char record[80] = {0};
-                char str[10];
-                record[0] = 'T';
-                
-                // 시작주소
-                sprintf(str, "%06X", t.address);
-                strcat(record, str);
-                index += 6;
-                
-                // TODO: 레이블 바이트 수
-                record[7] = '0';
-                record[8] = '0';
-                index += 2;
-                
-                // 레코드 채우기
-                while (index + strlen(t.objectCode) < 70) {
-                    if (search_opcode(t.operator) < 0 && strcmp(t.operator, "BYTE") && strcmp(t.operator, "WORD")) {
-                        break;
-                    }
-                    
-                    // 외부 참조 변수 쓰는지 확인
-                    int isFound = 0;
-                    for (int j = 0; j < extrefListCount; j++) {
-                        for (int k = 0; k < t.operandCount; k++) {
-                            if (strstr(t.operand[k], extrefList[j]) != NULL) {
-                                isFound = 1;
-                                extrefTokens[extrefTokenCount++] = t;
-                                break;
-                            }
-                        }
-                        
-                        if (isFound)
-                            break;
-                    }
-                    
-                    strcat(record + 9, t.objectCode);
-                    
-                    if (i == token_line - 1)
-                        break;
-                    
-                    t = *token_table[++i];
-                    index += strlen(t.objectCode);
-                }
-                
-                i--;
-                printf("%s\n", record);
+                t = *token_table[++i];
+                index += strlen(t.objectCode);
             }
+            record[7] = recordLength / 16 + '0';
+            record[8] = recordLength % 16 + (recordLength % 16 < 10 ? '0' : 'A' - 10);
+            objectProgramLength += recordLength;
+            i--;
+            strcatWithPrintf(buffer[bufferCount], "%s\n", record);
+            bufferCount++;
         }
-        return;
     }
 }

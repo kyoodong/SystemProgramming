@@ -6,6 +6,8 @@
 #define MAX_LINES 5000
 #define MAX_OPERAND 3
 #define MAX_DIRECTIVE 20
+
+#define ERROR 987654321
 #define X 0b00001000
 #define E 0b00110001
 #define I 0b00010000
@@ -106,6 +108,10 @@ int search_unassigned_literal();
 int insert_literal(const char* name);
 int search_literal(const char* name);
 void literal2ObjectCode(const char* literal, char* str_for_save);
+void setNIXBPE(token* t);
+int calculateOperandInFormat3(token* t, int pc, const char* csect);
+int calculateOperandInFormat2(token* t);
+void printF(const FILE* file, const char* format, ...);
 
 char currentCsect[10];
 static int objectProgramLength;
