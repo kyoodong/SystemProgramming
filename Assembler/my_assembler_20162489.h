@@ -17,7 +17,7 @@
 
 int registerCount = 10;
 char registers[10] = {
-    'A', 'X', 'L', 'B', 'S', 'T', 'F', '?', 'P', 'S'
+    'A', 'X', 'L', 'B', 'S', 'T', 'F', '?', 'P', 'W'
 };
 
 struct directive_unit {

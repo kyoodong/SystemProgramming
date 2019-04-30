@@ -477,6 +477,23 @@ static int assem_pass1(void)
 		}
 		else if (!strcmp(t->operator, "END")) {
 			// 프로그램 시작 주소 명시한 케이스
+            int index;
+            while ((index = search_unassigned_literal()) != -1) {
+                literal_table[index].addr = locctr;
+                
+                if (literal_table[index].name[1] == 'C') {
+                    int size = 0;
+                    
+                    for (int t = 3; literal_table[index].name[t] != '\''; t++, size++);
+                    locctr += size;
+                }
+                else if (literal_table[index].name[1] == 'X') {
+                    int size = 0;
+                    
+                    for (int t = 3; literal_table[index].name[t] != '\''; t++, size++);
+                    locctr += size / 2;
+                }
+            }
 		}
 		else if (!strcmp(t->operator, "BASE")) {
 			// TODO: BASE 처리
@@ -741,7 +758,8 @@ int calculateOperandInFormat2(token* t) {
             return -1;
         
         operand += registerIndex;
-        operand <<= 4;
+        if (k < 1)
+            operand <<= 4;
     }
     return operand;
 }
@@ -959,6 +977,10 @@ void make_objectcode_output(char *file_name)
     char buffer[100][80] = {0};
     int bufferCount = 0;
     
+    // 리터럴 리스트
+    char literals[3][10];
+    int literalCount = 0;
+    
     for (int i = 0; i < token_line; i++) {
         token t = *token_table[i];
         
@@ -994,7 +1016,48 @@ void make_objectcode_output(char *file_name)
         } else if (!strcmp(t.operator, "RESW")) {
             objectProgramLength += (atoi(t.operand[0]) * 3);
         } else if (!strcmp(t.operator, "LTORG")) {
+            if (literalCount == 0)
+                continue;
             
+            if (!strcmp((*token_table[i - 1]).operator, "RESB") || !strcmp((*token_table[i - 1]).operator, "RESW")) {
+                char tmp[10] = {0};
+                literal2ObjectCode(literals[0], tmp);
+                int length = strlen(tmp) / 2;
+                int recordLength = strlen(buffer[bufferCount - 1]);
+                
+                strcatWithPrintf(buffer[bufferCount], "T%06X%02X%s\n", objectProgramLength, length, tmp);
+                bufferCount++;
+                literalCount--;
+                objectProgramLength += length;
+            }
+            
+            // 직전 명령어에 추가 가능한지
+            int sum = 0;
+            while (literalCount > 0) {
+                literalCount--;
+                char tmp[10] = {0};
+                literal2ObjectCode(literals[literalCount], tmp);
+                int length = strlen(tmp) / 2;
+                int recordLength = strlen(buffer[bufferCount - 1]);
+                
+                if (length + recordLength < 70) {
+                    buffer[bufferCount - 1][recordLength - 1] = '\0';
+                    strcatWithPrintf(buffer[bufferCount - 1], "%s\n", tmp);
+                    objectProgramLength += length;
+                    
+                    char l[3];
+                    strncpy(l, buffer[bufferCount - 1] + 7, 2);
+                    sum = strtol(l, NULL, 16) + length;
+                    sprintf(l, "%02X", sum);
+                    buffer[bufferCount - 1][7] = l[0];
+                    buffer[bufferCount - 1][8] = l[1];
+                } else {
+                    strcatWithPrintf(buffer[bufferCount], "T%06X00%s\n", objectProgramLength, tmp);
+                    sum = 0;
+                    bufferCount++;
+                }
+                objectProgramLength += length;
+            }
         } else if (!strcmp(t.operator, "EQU")){
             // 외부 참조 변수 쓰는지 확인
             int isFound = 0;
@@ -1021,9 +1084,9 @@ void make_objectcode_output(char *file_name)
                 } else {
                     //TODO: WORD 구분 해서 06 출력해줘야함
                     // TODO: -만 처리하는거 고쳐야함
-                    strcatWithPrintf(buffer[bufferCount], "M%06X06+%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[0]);
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06+%s\n", extrefTokens[j].address, extrefTokens[j].operand[0]);
                     bufferCount++;
-                    strcatWithPrintf(buffer[bufferCount], "M%06X06-%s\n", extrefTokens[j].address + 1, extrefTokens[j].operand[1]);
+                    strcatWithPrintf(buffer[bufferCount], "M%06X06-%s\n", extrefTokens[j].address, extrefTokens[j].operand[1]);
                     bufferCount++;
                 }
             }
@@ -1032,7 +1095,13 @@ void make_objectcode_output(char *file_name)
             extrefListCount = 0;
             
             strcatWithPrintf(buffer[0], "%06X\n", objectProgramLength);
-            strcatWithPrintf(buffer[bufferCount], "E\n");
+            strcatWithPrintf(buffer[bufferCount], "E");
+            
+            // 첫 번째 컨트롤섹션일때
+            if (!strcmp(csect, "COPY")) {
+                strcatWithPrintf(buffer[bufferCount], "%06X", atoi((*token_table[0]).operand[0]));
+            }
+            strcatWithPrintf(buffer[bufferCount], "\n");
             bufferCount++;
             objectProgramLength = 0;
             
@@ -1047,6 +1116,47 @@ void make_objectcode_output(char *file_name)
             strcpy(csect, t.label);
             bufferCount++;
         } else if (!strcmp(t.operator, "END")) {
+            if (literalCount == 0)
+                continue;
+            
+            if (!strcmp((*token_table[i - 1]).operator, "RESB") || !strcmp((*token_table[i - 1]).operator, "RESW")) {
+                char tmp[10] = {0};
+                literal2ObjectCode(literals[0], tmp);
+                int length = strlen(tmp) / 2;
+                int recordLength = strlen(buffer[bufferCount - 1]);
+                
+                strcatWithPrintf(buffer[bufferCount], "T%06X%02X%s\n", objectProgramLength, length, tmp);
+                bufferCount++;
+                literalCount--;
+            }
+            
+            // 직전 명령어에 추가 가능한지
+            int sum = 0;
+            while (literalCount > 0) {
+                literalCount--;
+                char tmp[10] = {0};
+                literal2ObjectCode(literals[literalCount], tmp);
+                int length = strlen(tmp) / 2;
+                int recordLength = strlen(buffer[bufferCount - 1]);
+                
+                if (length + recordLength < 70) {
+                    buffer[bufferCount - 1][recordLength - 1] = '\0';
+                    strcatWithPrintf(buffer[bufferCount - 1], "%s\n", tmp);
+                    objectProgramLength += length;
+                    
+                    char l[3];
+                    strncpy(l, buffer[bufferCount - 1] + 7, 2);
+                    sum = strtol(l, NULL, 16) + length;
+                    sprintf(l, "%02X", sum);
+                    buffer[bufferCount - 1][7] = l[0];
+                    buffer[bufferCount - 1][8] = l[1];
+                } else {
+                    strcatWithPrintf(buffer[bufferCount], "T%06X00%s\n", objectProgramLength, tmp);
+                    sum = 0;
+                    bufferCount++;
+                }
+            }
+            
             for (int j = 0; j < extrefTokenCount; j++) {
                 // BUFEND - BUFFER 수식 분리
                 int error = split(extrefTokens[j].operand[0], extrefTokens[j].operand[1], '-');
@@ -1091,6 +1201,23 @@ void make_objectcode_output(char *file_name)
             while (index + strlen(t.objectCode) < 70) {
                 if (search_opcode(t.operator) < 0 && strcmp(t.operator, "BYTE") && strcmp(t.operator, "WORD")) {
                     break;
+                }
+                
+                // 리터럴 처리
+                if (t.operand[0][0] == '=') {
+                    int isExist = 0;
+                    // 이미 할당된 리터럴인지 체크
+                    for (int k = 0; k < literalCount; k++) {
+                        if (!strcmp(literals[k], t.operand[0])) {
+                            isExist = 1;
+                            break;
+                        }
+                    }
+                    
+                    // 이미 할당된 리터럴이 아닐 때만 리터럴에 추가
+                    if (!isExist) {
+                        strcpy(literals[literalCount++], t.operand[0]);
+                    }
                 }
                 
                 // 외부 참조 변수 쓰는지 확인

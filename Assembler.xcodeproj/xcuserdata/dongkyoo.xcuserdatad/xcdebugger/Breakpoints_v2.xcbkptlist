@@ -10,7 +10,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1645761"
+            timestampString = "578329531.481375"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "94"
@@ -26,7 +26,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.165426"
+            timestampString = "578329531.482892"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "70"
@@ -42,11 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.165851"
+            timestampString = "578329531.483974"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "854"
-            endingLineNumber = "854"
+            startingLineNumber = "872"
+            endingLineNumber = "872"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -58,11 +58,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.166334"
+            timestampString = "578329531.4848469"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "854"
-            endingLineNumber = "854"
+            startingLineNumber = "872"
+            endingLineNumber = "872"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -74,11 +74,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1668071"
+            timestampString = "578329531.485788"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "794"
-            endingLineNumber = "794"
+            startingLineNumber = "812"
+            endingLineNumber = "812"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -90,11 +90,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1671669"
+            timestampString = "578329531.486544"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "801"
-            endingLineNumber = "801"
+            startingLineNumber = "819"
+            endingLineNumber = "819"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -106,7 +106,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.167519"
+            timestampString = "578329531.4873461"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "260"
@@ -122,7 +122,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.167861"
+            timestampString = "578329531.4884419"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "261"
@@ -138,11 +138,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1682039"
+            timestampString = "578329531.48917"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "796"
-            endingLineNumber = "796"
+            startingLineNumber = "814"
+            endingLineNumber = "814"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -154,11 +154,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.168563"
+            timestampString = "578329531.489928"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1127"
-            endingLineNumber = "1127"
+            startingLineNumber = "1254"
+            endingLineNumber = "1254"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -170,11 +170,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1689039"
+            timestampString = "578329531.490625"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1127"
-            endingLineNumber = "1127"
+            startingLineNumber = "1254"
+            endingLineNumber = "1254"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -186,7 +186,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.169194"
+            timestampString = "578329531.491271"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "201"
@@ -202,7 +202,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.169464"
+            timestampString = "578329531.491879"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "205"
@@ -218,11 +218,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.169731"
+            timestampString = "578329531.492474"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "882"
-            endingLineNumber = "882"
+            startingLineNumber = "900"
+            endingLineNumber = "900"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -234,11 +234,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.169996"
+            timestampString = "578329531.4930969"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "887"
-            endingLineNumber = "887"
+            startingLineNumber = "905"
+            endingLineNumber = "905"
             landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
@@ -250,11 +250,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.1702811"
+            timestampString = "578329531.493695"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1015"
-            endingLineNumber = "1015"
+            startingLineNumber = "1078"
+            endingLineNumber = "1078"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -266,11 +266,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.170531"
+            timestampString = "578329531.494254"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "999"
-            endingLineNumber = "999"
+            startingLineNumber = "1097"
+            endingLineNumber = "1097"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -282,11 +282,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.170776"
+            timestampString = "578329531.494797"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1000"
-            endingLineNumber = "1000"
+            startingLineNumber = "1098"
+            endingLineNumber = "1098"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -298,11 +298,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.171042"
+            timestampString = "578329531.4953541"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1034"
-            endingLineNumber = "1034"
+            startingLineNumber = "1113"
+            endingLineNumber = "1113"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -314,11 +314,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.171277"
+            timestampString = "578329531.4959739"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1035"
-            endingLineNumber = "1035"
+            startingLineNumber = "1105"
+            endingLineNumber = "1105"
             landmarkName = "make_objectcode_output()"
             landmarkType = "9">
          </BreakpointContent>
@@ -330,12 +330,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.171522"
+            timestampString = "578329531.496541"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1044"
-            endingLineNumber = "1044"
-            landmarkName = "make_objectcode_output()"
+            startingLineNumber = "920"
+            endingLineNumber = "920"
+            landmarkName = "assem_pass2()"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -346,7 +346,39 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Assembler/my_assembler_20162489.c"
-            timestampString = "578319699.171755"
+            timestampString = "578329531.497062"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "761"
+            endingLineNumber = "761"
+            landmarkName = "calculateOperandInFormat2()"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Assembler/my_assembler_20162489.c"
+            timestampString = "578329531.497563"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "713"
+            endingLineNumber = "713"
+            landmarkName = "calculateOperandInFormat3()"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Assembler/my_assembler_20162489.c"
+            timestampString = "578329531.498041"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "1036"
